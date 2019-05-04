@@ -1,0 +1,128 @@
+#include "srarchincom.h"
+#include "ui_srarchincom.h"
+
+SrarchIncom::SrarchIncom(QWidget *parent) :
+    QWidget(parent),
+    ui(new Ui::SrarchIncom)
+{
+    ui->setupUi(this);
+
+}
+
+SrarchIncom::~SrarchIncom()
+{
+    delete ui;
+}
+
+
+void SrarchIncom::on_pb_searchyearmouth_clicked()
+{
+    //qDebug()<<ui->line_Year->text()<<endl;
+    QString data = ui->line_YearYear->text() +"-"+ui->line_MothMoth->text();
+    QList<int> m_daydata =  DataBaseOperate::SelectIncomeInfo(MOUTH,data);
+    for(int i = 0; i<m_daydata.size();i++)
+    {
+        qDebug()<<"第"<<i+1<<"天 收入"<<m_daydata[i]<<endl;
+    }
+     ShowBar(m_daydata,100,100);
+
+}
+
+void SrarchIncom::on_pb_searchyear_clicked()
+{
+    qDebug()<<ui->line_Year->text()<<endl;
+    QList<int> m_mouthdata =  DataBaseOperate::SelectIncomeInfo(YEAR,ui->line_Year->text());
+    for(int i = 0; i<m_mouthdata.size();i++)
+    {
+        qDebug()<<"第"<<i+1<<"月 收入"<<m_mouthdata[i]<<endl;
+    }
+    ShowBar(m_mouthdata,100,100);
+
+
+}
+
+void SrarchIncom::on_pb_showlegend_clicked()
+{
+
+
+}
+
+void SrarchIncom::ShowBar(QList<int> data,int high,int with)
+{
+     m_customerplot = ui->widget_customplot;
+     QLinearGradient gradient(0, 0, 0, 400);
+     gradient.setColorAt(0, QColor(36,138,159));
+     gradient.setColorAt(0.38, QColor(47,180,207));
+     gradient.setColorAt(1, QColor(53,205,236));
+     m_customerplot->setBackground(QBrush(gradient));//设置背景渐变色
+
+     QCPBars *BarPlot = new QCPBars(m_customerplot->xAxis, m_customerplot->yAxis);//画柱状图
+
+     BarPlot->setAntialiased(false); //取消反锯齿 gives more crisp, pixel aligned bar borders
+
+     BarPlot->setName("ShowBar");
+     BarPlot->setPen(QPen(QColor(205,19,37).lighter(130)));
+     BarPlot->setBrush(QColor(255,31,53));
+     int m_size = data.size();
+     qDebug()<<"size = "<<m_size<<endl;
+      QVector<double> ticks;
+       qDebug()<<"ticks size = "<<ticks.size()<<endl;
+      QVector<QString> labels;
+     if(m_size == 12)
+     {
+
+         ticks << 1 << 2 << 3 << 4 << 5 << 6 << 7<< 8 << 9 << 10 << 11 << 12;
+         labels << "一月" << "二月" << "三月" << "四月" << "五月" << "六月" << "七月"
+                    << "八月" << "九月" << "十月" << "十一月" << "十二月";
+         qDebug()<<"msize mouth"<<ticks.size()<<labels.size()<<endl;
+     }else
+     {
+          QVariant temp;
+          for(int i = 0;i<m_size;i++)
+          {
+            ticks[i] = i;
+            temp = i;
+            labels[i] = "第" + temp.toString() + "天";
+          }
+
+     }
+     QSharedPointer<QCPAxisTickerText> textTicker(new QCPAxisTickerText);
+     textTicker->addTicks(ticks, labels);
+     m_customerplot->xAxis->setTicker(textTicker);
+     m_customerplot->xAxis->setTickLabelRotation(0);//设置标签角度旋转
+     m_customerplot->xAxis->setSubTicks(false);
+     m_customerplot->xAxis->setTickLength(0, 4);
+     m_customerplot->xAxis->setRange(0, 13);
+     m_customerplot->xAxis->setBasePen(QPen(Qt::white));
+     m_customerplot->xAxis->setTickPen(QPen(Qt::white));
+     m_customerplot->xAxis->grid()->setVisible(true);//设置网格是否显示
+     m_customerplot->xAxis->grid()->setPen(QPen(QColor(130, 130, 130), 0, Qt::DotLine));
+     m_customerplot->xAxis->setTickLabelColor(Qt::white);//设置标记标签颜色
+     m_customerplot->xAxis->setLabelColor(Qt::white);
+
+     // prepare y axis:
+     m_customerplot->yAxis->setRange(0,12.1);
+     m_customerplot->yAxis->setPadding(5); // a bit more space to the left border设置左边留白
+     m_customerplot->yAxis->setLabel("营业额");
+     m_customerplot->yAxis->setBasePen(QPen(Qt::white));
+     m_customerplot->yAxis->setTickPen(QPen(Qt::white));
+     m_customerplot->yAxis->setSubTickPen(QPen(Qt::white));
+     m_customerplot->yAxis->grid()->setSubGridVisible(true);
+     m_customerplot->yAxis->setTickLabelColor(Qt::white);
+     m_customerplot->yAxis->setLabelColor(Qt::white);
+     m_customerplot->yAxis->grid()->setPen(QPen(QColor(130, 130, 130), 0, Qt::SolidLine));
+     m_customerplot->yAxis->grid()->setSubGridPen(QPen(QColor(130, 130, 130), 0, Qt::DotLine));
+
+     QVector<double> fossilData;
+     fossilData  << 0.86*10.5 << 0.83*5.5 << 0.84*5.5 << 0.52*5.8 << 0.89*5.2 << 0.90*4.2 << 0.67*11.2
+                 <<0.86*10.5 << 0.83*5.5 << 0.84*5.5 << 0.52*5.8<<0.86*10.5;
+    BarPlot->setData(ticks, fossilData);
+     m_customerplot->legend->setVisible(true);
+     m_customerplot->axisRect()->insetLayout()->setInsetAlignment(0, Qt::AlignTop|Qt::AlignHCenter);
+     m_customerplot->legend->setBrush(QColor(255, 255, 255, 100));
+     m_customerplot->legend->setBorderPen(Qt::NoPen);
+     QFont legendFont = font();
+     legendFont.setPointSize(10);
+     m_customerplot->legend->setFont(legendFont);
+     m_customerplot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom);
+}
